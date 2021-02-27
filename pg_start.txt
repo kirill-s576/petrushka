@@ -1,0 +1,1 @@
+docker run -d --name pet_postgres --env-file ./env.env -p 5432:5432 postgres
