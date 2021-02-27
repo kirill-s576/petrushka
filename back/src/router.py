@@ -19,7 +19,7 @@ def main():
 def solver_type_list():
     """  """
     view_set = SolverTypeViewSet(request)
-    page = request.args.get('page', 0)
+    page = int(request.args.get('page', 0))
     return view_set.list(page=page)
 
 @app.route('/solver_type', methods=['POST'])
@@ -45,7 +45,7 @@ def solver_type_update(id):
 def solver_list():
     """  """
     view_set = SolverViewSet(request)
-    page = request.args.get('page', 0)
+    page = int(request.args.get('page', 0))
     return view_set.list(page=page)
 
 @app.route('/solver', methods=['POST'])
@@ -71,7 +71,7 @@ def solver_update(id):
 def test_list():
     """  """
     view_set = TestViewSet(request)
-    page = request.args.get('page', 0)
+    page = int(request.args.get('page', 0))
     return view_set.list(page=page)
 
 @app.route('/test', methods=['POST'])
