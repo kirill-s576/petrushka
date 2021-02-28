@@ -48,6 +48,7 @@ class TestRunSerializer(BaseModel):
     solver: int = None
     test: int = None
     started_at: datetime.datetime = None
+    finished_at: datetime.datetime = None
     finished: bool = None
     result: bool = None
     log: str = None
@@ -56,6 +57,7 @@ class TestRunCreateSerializer(BaseModel):
     solver_id: int
     test_id: int
     started_at: datetime.datetime = datetime.datetime.now()
+    finished_at: datetime.datetime = None
     finished: bool = False
     result: bool = False
     log: str = ""

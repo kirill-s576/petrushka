@@ -1,5 +1,16 @@
-from src.database.fields import IntegerField
+from functools import cached_property
 
+
+class aaa:
+
+    a = 3
+    b = 4
+
+    @cached_property
+    def d(self):
+        return self.a+self.b
 
 if __name__ == '__main__':
-    f = IntegerField(max_length=255)
+    c = aaa()
+    print(c.d)
+    print(c.__dict__)
