@@ -16,7 +16,6 @@ from .serializers import (
     TestRunCreateSerializer
 )
 from .database.models import (
-    pg_database,
     Solver,
     SolverType,
     Test,

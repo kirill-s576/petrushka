@@ -83,13 +83,13 @@ create_all_tables()
     -POST   /<object>/{id} - обновить поля объекта по его id, где в теле запроса передается JSON с новыми данными объекта.
     -DELETE /<object>/{id} - удалить объект по id.
 
-Стоит учесть, что записей в базе данных может быть очень много, поэтому для всех запросов на получение списка обхектов
+Стоит учесть, что записей в базе данных может быть очень много, поэтому для всех запросов на получение списка объектов
 добавляем новый параметр "page".
 Количество объектов, которые отдаются на странице ограничивается в файле
 [config.py](./back/config.py) переметром OBJECTS_PER_PAGE(по умолчанию 20).
 
-Для выбора страницы отправляется параметрический GET запрос:
-GET    /<object>?page=n , где n-номер страницы
+Для выбора страницы отправляется параметрический GET запрос: <br>
+GET    /<object>?page=n , где n-номер страницы <br>
 Результатом работы этого метода будет JSON следующего формата:
 
 ```json
@@ -104,3 +104,56 @@ GET    /<object>?page=n , где n-номер страницы
 
 Созданные эндпоинты можно найти в файле роутера 
 [router.py](./back/src/router.py)
+
+### Реализация функционала API методов.
+
+На данный момент у нас имеются точки, в которые призодит запрос пользователя, и есть база данных.
+Однако нет слоя, который связывает эти 2 слоя и реализует функционал чтения и записи данных.
+
+Для удобства работы с объектами реализуем новый уровень абстракии ViewSet.
+В нем будут собраны все методы, которые можно совершить с объектом(-ами) базы данных.
+Для начала создаем базовый интерфейс, который наследуется от класса ABC штатной библиотеки abc python.
+Наследование от этого класса обязывает в каждом последующем ViewSet переопределить методы базового класса, 
+помеченные декоратором @abstractmethod.
+Это должно гарантировать нам существование бащовых методов **list**, **create**, **update**, **retrieve**, **delete** 
+в каждом реализованном нами ViewSet.
+
+````python
+from abc import ABC, abstractmethod
+from src.lib.response import JsonResponse
+from flask import request
+
+class BaseViewSet(ABC):
+
+    def __init__(self, request: request):
+        self.request = request
+
+    @abstractmethod
+    def list(self, page: int = 0) -> JsonResponse:
+        pass
+
+    @abstractmethod
+    def retrieve(self, id: int) -> JsonResponse:
+        pass
+
+    @abstractmethod
+    def update(self, id: int) -> JsonResponse:
+        return JsonResponse({})
+
+    @abstractmethod
+    def create(self) -> JsonResponse:
+        pass
+
+    @abstractmethod
+    def delete(self, id: int) -> JsonResponse:
+        pass
+````
+
+В файле [views.py](./back/src/views.py) мы можем ознакомиться со всеми созданными ViewSet.
+
+    - SolverTypeViewSet
+    - SolverViewSet
+    - TestViewSet
+    - TestRunViewSet
+
+   
