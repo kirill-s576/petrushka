@@ -149,11 +149,108 @@ class BaseViewSet(ABC):
         pass
 ````
 
-В файле [views.py](./back/src/views.py) мы можем ознакомиться со всеми созданными ViewSet.
+В файле [views.py](./back/src/views.py) мы можем ознакомиться со всеми созданными ViewSet. По одному ViewSet для каждой модели.
 
     - SolverTypeViewSet
     - SolverViewSet
     - TestViewSet
     - TestRunViewSet
 
+Для мримера разберем что происходит внутри одного из ViewSet, который работает с моделью SolverType.
+Внутри всех остальных ViewSet все практически идентично...
+Что нам дополнительно нужно знать перед рассмотрением следующего кода?
+
+    - Serializer: класс, который валидирует пришедшие в него данныеб принимая dict с параметрами объекта. 
+    В дальнейшем можно использовать его как объект с полями или воспользоваться методом .dict(), 
+    чтобы вернуть валидированный словарь с данными об объекте.
+    - JsonResponse: Надстройка над базовым Flask Response для удобства работы с Json данными. Каждый из методов
+    ViewSet должен отдавать именно этот объект, либо непосредственно Flask Response, если возвращаемый ответ 
+    будет не JSON. Это тот ответ, который получит пользователь.
+
+---
+
+Вернемся к ViewSet
+
+```python
+from src.views import BaseViewSet
+from src.lib.response import JsonResponse # Импортируем вспомогательный Json Response.
+from src.serializers import (
+    SolverTypeSerializer, 
+    SolverTypeCreateSerializer,
+    SolverTypeUpdateSerializer
+) # Испортирем все нужные нам Serializers. Каждый метод требует немного разные обязательные 
+# параметры для работы поэтому и Serializer для каждых целей свой
+from src.database.models import (
+    SolverType
+) # Импортируем класс для работы с нужной таблицей базы данных.
+
+
+class SolverTypeViewSet(BaseViewSet):
+
+    def list(self, page: int = 0): 
+        """
+        Метод возвращает список объектов SolverType.
+        Формат:
+        {
+            "total": total_count, # Общее количество объектов SolverType в БД.
+            "page": page,  # Запрошенная страница.
+            "objects": []  # Список найденных объектов(Пустой список, если их нет или превышено кол-во страниц)
+        }
+        """
+        models = SolverType \
+            .select() \
+            .offset(page * self.PAGE_SIZE) \
+            .limit(page * self.PAGE_SIZE + self.PAGE_SIZE) # Запрашиваем в БД нужные нам объекты.
+        total_count = SolverType.select().count() # Запрашиваем в БД общее количество объектов.
+        output_list = [] # Создаем пока пустой список с объектами для Response.
+        for model in models: #  Проходим по каждому объекту, которые вернула нам БД.
+            serializer = SolverTypeSerializer(**model.__data__) # Заполняем Serializer данными из БД.
+            output_list.append(serializer.dict()) # С помощью Serializer превращаем каждый в dict и добавляем в output_list
+        return JsonResponse({
+            "total": total_count,
+            "page": page,
+            "objects": output_list
+        }) # Возвращаем результат в виде JsonResponse
+
+    def retrieve(self, id: int) -> JsonResponse:
+        """
+        Метод возвращает данные об одном объекте SolverType по его id.
+        """
+        model = SolverType.get(id=id) # Получаем объект из БД по id.
+        serializer = SolverTypeSerializer(**model.__data__)  # Заполняем полученными данными Serializer
+        return JsonResponse(serializer.dict()) # Получаем от Serializer словарь и возвращаем его как Json Response
+
+    def update(self, id: int) -> JsonResponse:
+        """
+        Метод обновляет данные одного объекте SolverType по его id.
+        """
+        model = SolverType.get(id=id) # Получаем объект из БД по id.
+        serializer = SolverTypeUpdateSerializer(**self.request_data) # Заполняем полученными данными Serializer
+        # Следующий цикл проходит по каждому элементу Serializer и обновляет его данными объект БД.
+        for key, value in serializer.dict().items(): 
+            setattr(model, key, value)
+        model.save() # Сохраняем обновленную модель БД.
+        updated_model_serializer = SolverTypeSerializer(**model.__data__) # Заполняем данными обновленного объекта БД Serializer.
+        return JsonResponse(updated_model_serializer.dict()) # Возвращаем обновленную модель как Json Response
+
+    def create(self) -> JsonResponse:
+        """
+        Метод создает новый объект SolverType в БД.
+        """
+        serializer = SolverTypeCreateSerializer(**self.request_data) # Заполняем данными в запросе Serializer.
+        model = SolverType.create(**serializer.dict()) # Пользуемся методом объекта БД .create(), распаковывая в него словарь, полученный из serializer.
+        # Примечание. Подробнее про распаковку *args и **kwargs можно почитать тут 
+        # https://pyneng.readthedocs.io/ru/latest/book/09_functions/func_unpacking_args.html
+        created_model_serializer = SolverTypeSerializer(**model.__data__) # Созданный объект передаем в нужный Serizlizer
+        return JsonResponse(created_model_serializer.dict())  # И возвращаем пользователю созданный объект.
+
+    def delete(self, id: int) -> JsonResponse:
+        """
+        Метод удаляет объект SolverType из БД по его id.
+        """
+        return JsonResponse({})
+```
+
+В итоге мы получаем следующий маршруд движения Запроса пользователя
+![Requesr RoadMap](./docs/images/request-road.jpg)
    
