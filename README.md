@@ -252,5 +252,5 @@ class SolverTypeViewSet(BaseViewSet):
 ```
 
 В итоге мы получаем следующий маршруд движения Запроса пользователя
-![Requesr RoadMap](./docs/images/request-road.jpg)
+![Requesr RoadMap](docs/images/request-road-map.jpg)
    
